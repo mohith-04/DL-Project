@@ -1,0 +1,26 @@
+[
+  {
+    "id": "q01",
+    "topic": "Retrieval-augmented generation",
+    "question": "What is Retrieval-Augmented Generation (RAG) and why is it used?",
+    "expected_classification": "agree",
+    "ground_truth": "Retrieval-Augmented Generation (RAG) combines a large language model (LLM) with an external knowledge base. It is used to ground the LLM's answers in factual, up-to-date information, reducing hallucinations and allowing the model to reference domain-specific data without retraining.",
+    "notes": "Basic definition question where all sources should agree."
+  },
+  {
+    "id": "q02",
+    "topic": "Retrieval-augmented generation",
+    "question": "What are the two main phases of the RAG pipeline?",
+    "expected_classification": "agree",
+    "ground_truth": "The two main phases are the retrieval phase (finding relevant information from a knowledge base using embeddings) and the generation phase (passing the retrieved information to an LLM to formulate an answer).",
+    "notes": "Core architecture question."
+  },
+  {
+    "id": "q03",
+    "topic": "Retrieval-augmented generation",
+    "question": "What are the limitations or challenges of using RAG?",
+    "expected_classification": "partial",
+    "ground_truth": "Challenges include the quality of the retrieved data, the latency added by the retrieval step, the context window limits of the LLM, and the complexity of maintaining the vector database.",
+    "notes": "Sources usually agree but emphasize different challenges."
+  }
+]

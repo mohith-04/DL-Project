@@ -1,0 +1,26 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground-rgb: 0, 0, 0;
+  --background-start-rgb: 214, 219, 220;
+  --background-end-rgb: 255, 255, 255;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.prose pre {
+  @apply bg-slate-900 text-slate-100 rounded-lg p-4 overflow-x-auto text-sm;
+}
+
+.source-tag {
+  @apply inline-flex items-center px-1.5 py-0.5 rounded text-xs font-semibold ml-0.5;
+}
+
+.source-tag-A { @apply bg-blue-100 text-blue-800; }
+.source-tag-B { @apply bg-emerald-100 text-emerald-800; }
+.source-tag-C { @apply bg-amber-100 text-amber-800; }
+.source-tag-D { @apply bg-purple-100 text-purple-800; }
