@@ -78,15 +78,21 @@ export function SourcePanel({ chatResponse }: SourcePanelProps) {
             {expandedSource === s.source_id && (
               <div className="px-3 pb-3 space-y-2">
                 <p className="text-sm text-slate-600">{s.summary}</p>
-                <a
-                  href={s.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 text-xs text-brand-600 hover:underline"
-                >
-                  <ExternalLink className="w-3 h-3" />
-                  View Source
-                </a>
+                {s.url.startsWith('http') ? (
+                  <a
+                    href={s.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-xs text-brand-600 hover:underline"
+                  >
+                    <ExternalLink className="w-3 h-3" />
+                    View Web Source
+                  </a>
+                ) : (
+                  <span className="inline-flex items-center gap-1 text-xs text-slate-500 font-mono bg-slate-100 px-2 py-0.5 rounded">
+                    📄 {s.url.replace('file://', '')} (Local Document)
+                  </span>
+                )}
                 {/* Retrieved Chunks */}
                 {retrieved_chunks[s.source_id]?.length > 0 && (
                   <div className="mt-2">

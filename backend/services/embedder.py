@@ -98,11 +98,24 @@ def build_index(scraped_sources: List[dict], session_id: str) -> dict:
 
 def load_index(session_id: str):
     """Load FAISS index and metadata for a session. Returns (index, meta)."""
-    index_path = os.path.join(settings.faiss_index_dir, f"{session_id}.index")
-    meta_path = os.path.join(settings.faiss_index_dir, f"{session_id}.meta.pkl")
+    candidates = [
+        settings.faiss_index_dir,
+        os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "faiss_indices"),
+        "./faiss_indices",
+        "./backend/faiss_indices",
+    ]
+    index_path = None
+    meta_path = None
+    for candidate_dir in candidates:
+        ip = os.path.join(candidate_dir, f"{session_id}.index")
+        mp = os.path.join(candidate_dir, f"{session_id}.meta.pkl")
+        if os.path.exists(ip) and os.path.exists(mp):
+            index_path = ip
+            meta_path = mp
+            break
 
-    if not os.path.exists(index_path):
-        raise FileNotFoundError(f"No index found for session {session_id}")
+    if not index_path or not os.path.exists(index_path):
+        raise FileNotFoundError(f"No index found for session {session_id} (searched in {candidates})")
 
     index = faiss.read_index(index_path)
     with open(meta_path, "rb") as f:

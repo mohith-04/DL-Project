@@ -13,7 +13,7 @@ const nextConfig = {
   experimental: {
     proxyTimeout: 180000, // 3 minutes for long-running ingest scraping
     serverActions: {
-      bodySizeLimit: '2mb',
+      bodySizeLimit: '50mb',
     },
   },
   // Proxy timeout configuration (ms) — allow up to 5 min for ingest

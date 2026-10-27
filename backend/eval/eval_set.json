@@ -1,26 +1,1002 @@
 [
   {
     "id": "q01",
-    "topic": "Retrieval-augmented generation",
+    "topic": "Retrieval-Augmented Generation",
+    "category": "RAG",
+    "difficulty": "easy",
     "question": "What is Retrieval-Augmented Generation (RAG) and why is it used?",
     "expected_classification": "agree",
-    "ground_truth": "Retrieval-Augmented Generation (RAG) combines a large language model (LLM) with an external knowledge base. It is used to ground the LLM's answers in factual, up-to-date information, reducing hallucinations and allowing the model to reference domain-specific data without retraining.",
-    "notes": "Basic definition question where all sources should agree."
+    "ground_truth": "Retrieval-Augmented Generation (RAG) combines a large language model with an external knowledge retrieval component. It dynamically fetches relevant context from external documents at inference time to ground model responses in factual, current data, effectively mitigating hallucinations without requiring model retraining.",
+    "notes": "Fundamental definition with universal consensus across all academic sources."
   },
   {
     "id": "q02",
-    "topic": "Retrieval-augmented generation",
-    "question": "What are the two main phases of the RAG pipeline?",
+    "topic": "Retrieval-Augmented Generation",
+    "category": "RAG",
+    "difficulty": "easy",
+    "question": "What are the two main phases of the standard RAG pipeline?",
     "expected_classification": "agree",
-    "ground_truth": "The two main phases are the retrieval phase (finding relevant information from a knowledge base using embeddings) and the generation phase (passing the retrieved information to an LLM to formulate an answer).",
-    "notes": "Core architecture question."
+    "ground_truth": "The standard RAG pipeline consists of the retrieval phase and the generation phase. In retrieval, a user query is converted into an embedding or keyword representation to search an external corpus for the top-k relevant text chunks. In generation, these retrieved chunks are inserted into the prompt context for the LLM to synthesize a grounded response.",
+    "notes": "Core two-stage architecture accepted in standard literature."
   },
   {
     "id": "q03",
-    "topic": "Retrieval-augmented generation",
-    "question": "What are the limitations or challenges of using RAG?",
+    "topic": "Retrieval-Augmented Generation",
+    "category": "RAG",
+    "difficulty": "medium",
+    "question": "What are the primary limitations or challenges of using naive RAG?",
     "expected_classification": "partial",
-    "ground_truth": "Challenges include the quality of the retrieved data, the latency added by the retrieval step, the context window limits of the LLM, and the complexity of maintaining the vector database.",
-    "notes": "Sources usually agree but emphasize different challenges."
+    "ground_truth": "Naive RAG faces challenges including retrieval failure (low recall or semantic mismatch), out-of-context chunking, ranking inaccuracy, generation hallucination despite context, added system latency, and token window constraints. Different sources prioritize different bottlenecks such as vector search precision versus synthesis fidelity.",
+    "notes": "Sources agree on major issues but emphasize different operational bottlenecks."
+  },
+  {
+    "id": "q04",
+    "topic": "Retrieval-Augmented Generation",
+    "category": "RAG",
+    "difficulty": "medium",
+    "question": "How does RAG differ from fine-tuning an LLM?",
+    "expected_classification": "agree",
+    "ground_truth": "Fine-tuning modifies the model weights using domain-specific dataset gradients, embedding knowledge directly into parameters at significant computational cost. In contrast, RAG freezes model parameters and dynamically retrieves contextual data at runtime, making it significantly easier to update, audit for provenance, and protect against data staleness.",
+    "notes": "Standard architectural distinction between parametric and non-parametric memory."
+  },
+  {
+    "id": "q05",
+    "topic": "Retrieval-Augmented Generation",
+    "category": "RAG",
+    "difficulty": "hard",
+    "question": "What chunking strategies are used in RAG and how do they affect retrieval performance?",
+    "expected_classification": "partial",
+    "ground_truth": "Common chunking strategies include fixed-size sliding token windows with overlap, sentence/paragraph boundary splitting, and semantic/recursive chunking. Small chunks improve vector search granularity and cosine similarity accuracy, while larger chunks preserve semantic context but risk introducing noise. Sources differ on optimal token lengths.",
+    "notes": "Sources propose differing chunk sizes and boundary heuristics depending on domain."
+  },
+  {
+    "id": "q06",
+    "topic": "Retrieval-Augmented Generation",
+    "category": "RAG",
+    "difficulty": "easy",
+    "question": "What is the difference between dense retrieval and sparse retrieval in RAG?",
+    "expected_classification": "agree",
+    "ground_truth": "Sparse retrieval (such as BM25 or TF-IDF) relies on lexical matching and term frequencies across documents, excelling at exact keyword and entity lookups. Dense retrieval embeds queries and documents into continuous latent semantic spaces using neural encoders, excelling at conceptual and semantic similarity beyond exact keywords.",
+    "notes": "Clear theoretical consensus on lexical versus semantic indexing."
+  },
+  {
+    "id": "q07",
+    "topic": "Retrieval-Augmented Generation",
+    "category": "RAG",
+    "difficulty": "medium",
+    "question": "How does Hybrid Search (combining BM25 and dense vector search) work?",
+    "expected_classification": "agree",
+    "ground_truth": "Hybrid search runs both sparse keyword retrieval (BM25) and dense semantic embedding retrieval in parallel over the same corpus. The individual ranked lists are merged using algorithms such as Reciprocal Rank Fusion (RRF) or relative score weighting to balance exact keyword precision with broad semantic understanding.",
+    "notes": "Standard multi-retriever aggregation technique."
+  },
+  {
+    "id": "q08",
+    "topic": "Retrieval-Augmented Generation",
+    "category": "RAG",
+    "difficulty": "medium",
+    "question": "What is the role of a cross-encoder re-ranker in modern RAG pipelines?",
+    "expected_classification": "agree",
+    "ground_truth": "A bi-encoder first retrieves an initial candidate pool (e.g., top-50) quickly using dot products. A cross-encoder re-ranker then takes the query and candidate chunk concatenated together through full self-attention, computing a much more accurate relevance score to select the top-k chunks for the generation stage.",
+    "notes": "Standard two-stage retrieval-rerank architecture."
+  },
+  {
+    "id": "q09",
+    "topic": "Retrieval-Augmented Generation",
+    "category": "RAG",
+    "difficulty": "medium",
+    "question": "How does contextual compression or chunk filtering optimize token usage in RAG?",
+    "expected_classification": "partial",
+    "ground_truth": "Contextual compression uses an auxiliary model or heuristic extractor to parse retrieved passages and strip irrelevant sentences before prompt assembly. This reduces prompt token count, lowers inference cost, and diminishes the distraction caused by uninformative context. Different frameworks use distinct compression heuristics.",
+    "notes": "Varying methods: LLM summarization vs embedding similarity vs heuristic pruning."
+  },
+  {
+    "id": "q10",
+    "topic": "Retrieval-Augmented Generation",
+    "category": "RAG",
+    "difficulty": "medium",
+    "question": "What is Multi-Query Generation or Query Expansion in advanced RAG?",
+    "expected_classification": "agree",
+    "ground_truth": "Multi-query generation employs an LLM to rewrite a single user query into multiple alternative phrasings or sub-questions representing different perspectives. Each rewritten query executes an independent retrieval search, and the resulting documents are unioned or deduplicated to increase retrieval recall.",
+    "notes": "Standard technique to overcome user phrasing bias."
+  },
+  {
+    "id": "q11",
+    "topic": "Retrieval-Augmented Generation",
+    "category": "RAG",
+    "difficulty": "hard",
+    "question": "What is Hypothetical Document Embeddings (HyDE) and when can it fail?",
+    "expected_classification": "partial",
+    "ground_truth": "HyDE prompts an LLM to generate a hypothetical answer to the user query and embeds that hypothetical text instead of the query itself to match document-to-document space. It fails when the query involves niche factual entities or counter-intuitive premises where the LLM's hallucinated document steers retrieval completely off-course.",
+    "notes": "Sources agree on the mechanism but evaluate its domain robustness differently."
+  },
+  {
+    "id": "q12",
+    "topic": "Retrieval-Augmented Generation",
+    "category": "RAG",
+    "difficulty": "hard",
+    "question": "How do vector indexing algorithms like HNSW and IVF balance query speed against recall?",
+    "expected_classification": "partial",
+    "ground_truth": "Hierarchical Navigable Small World (HNSW) constructs multi-layer proximity graphs for fast logarithmic search at higher memory cost, whereas Inverted File (IVF) partitions vector space into Voronoi cells to search only centroids. Both approximate nearest neighbor (ANN) methods trade exact recall for millisecond latency.",
+    "notes": "Differences in memory footprint and indexing build times highlighted by sources."
+  },
+  {
+    "id": "q13",
+    "topic": "Retrieval-Augmented Generation",
+    "category": "RAG",
+    "difficulty": "medium",
+    "question": "What is Parent-Document Retrieval (small-to-big retrieval) and what problem does it solve?",
+    "expected_classification": "agree",
+    "ground_truth": "Parent-document retrieval indexes fine-grained sub-chunks (e.g., individual sentences or small paragraphs) for precise vector matching, but returns the larger parent document or section to the LLM during generation. This resolves the trade-off between retrieval specificity and conversational context completeness.",
+    "notes": "Well-established hierarchical retrieval paradigm."
+  },
+  {
+    "id": "q14",
+    "topic": "Retrieval-Augmented Generation",
+    "category": "RAG",
+    "difficulty": "medium",
+    "question": "What distinguishes Modular RAG from traditional Naive RAG pipelines?",
+    "expected_classification": "agree",
+    "ground_truth": "Naive RAG follows a rigid sequential retrieve-then-read pipeline. Modular RAG incorporates dynamic, reconfigurable modules including iterative search, routing engines, memory retrieval, self-correction, and verification loops that adapt the execution flow based on query complexity.",
+    "notes": "Architectural evolution formalised in recent RAG survey papers (e.g., Gao et al., 2023)."
+  },
+  {
+    "id": "q15",
+    "topic": "Retrieval-Augmented Generation",
+    "category": "RAG",
+    "difficulty": "medium",
+    "question": "How does the 'Lost in the Middle' phenomenon impact RAG generator performance?",
+    "expected_classification": "agree",
+    "ground_truth": "The 'Lost in the Middle' phenomenon demonstrates that LLMs effectively attend to information placed at the very beginning or end of their prompt context, but struggle to extract and reason over relevant facts located within the middle of long concatenated contexts.",
+    "notes": "Confirmed empirically by Liu et al. (Stanford, 2023)."
+  },
+  {
+    "id": "q16",
+    "topic": "Retrieval-Augmented Generation",
+    "category": "RAG",
+    "difficulty": "hard",
+    "question": "What is Corrective RAG (CRAG) and how does it evaluate retrieval quality?",
+    "expected_classification": "partial",
+    "ground_truth": "Corrective RAG (CRAG) introduces a retrieval evaluator module that computes a confidence score for retrieved documents. If confident, it refines the context; if incorrect or ambiguous, it triggers a fallback web search or alternative knowledge source to substitute the retrieved documents before final generation.",
+    "notes": "Sources differ on the evaluator architecture (lightweight classifier vs LLM judge)."
+  },
+  {
+    "id": "q17",
+    "topic": "Retrieval-Augmented Generation",
+    "category": "RAG",
+    "difficulty": "easy",
+    "question": "Can RAG completely eliminate hallucinations in LLM responses?",
+    "expected_classification": "conflict",
+    "ground_truth": "No, RAG substantially reduces hallucinations by providing grounded context, but it cannot eliminate them entirely. The generator can still misinterpret retrieved context, combine contradictory facts incorrectly, hallucinate reasoning links, or hallucinate when context lacks full information.",
+    "notes": "Marketing materials claim complete elimination; academic literature proves persistence."
+  },
+  {
+    "id": "q18",
+    "topic": "Retrieval-Augmented Generation",
+    "category": "RAG",
+    "difficulty": "hard",
+    "question": "What is Self-RAG and how does it employ special reflection tokens?",
+    "expected_classification": "agree",
+    "ground_truth": "Self-RAG trains an LLM to adaptively generate reflection tokens that decide on-demand whether retrieval is needed ([Retrieve]), whether retrieved passages are relevant ([IsRel]), whether the generation is supported by context ([IsSup]), and overall utility ([IsUse]).",
+    "notes": "Established framework introduced by Asai et al. (2023)."
+  },
+  {
+    "id": "q19",
+    "topic": "Retrieval-Augmented Generation",
+    "category": "RAG",
+    "difficulty": "medium",
+    "question": "How should out-of-domain or unanswerable queries be handled in a robust RAG system?",
+    "expected_classification": "partial",
+    "ground_truth": "Robust RAG systems employ confidence thresholding on retrieval similarity scores, negative constraint prompting ('answer only from context, otherwise state unknown'), or classifier gates to refuse unanswerable queries. Sources disagree on whether refusing to answer or attempting cautious general synthesis is preferable.",
+    "notes": "Safety-first systems demand strict refusal; general assistants prefer best-effort answers."
+  },
+  {
+    "id": "q20",
+    "topic": "Retrieval-Augmented Generation",
+    "category": "RAG",
+    "difficulty": "hard",
+    "question": "How do Graph-based RAG (GraphRAG) approaches compare to standard vector-only RAG?",
+    "expected_classification": "conflict",
+    "ground_truth": "Vector RAG excels at localized chunk semantic similarity, but fails at cross-document multi-hop reasoning and high-level thematic summarization. GraphRAG extracts entity-relationship knowledge graphs and community clusters to enable global reasoning, though at significantly higher indexing cost and latency.",
+    "notes": "Some papers argue GraphRAG supersedes vector RAG, while others highlight excessive compute costs."
+  },
+  {
+    "id": "q21",
+    "topic": "Machine Learning",
+    "category": "ML",
+    "difficulty": "easy",
+    "question": "What is the difference between supervised, unsupervised, and reinforcement learning?",
+    "expected_classification": "agree",
+    "ground_truth": "Supervised learning learns a predictive mapping from labeled input-output pairs. Unsupervised learning identifies latent patterns, groupings, or representations from unlabeled data. Reinforcement learning trains autonomous agents to maximize cumulative reward signals through sequential trial-and-error environment interaction.",
+    "notes": "The three classical foundational paradigms of machine learning."
+  },
+  {
+    "id": "q22",
+    "topic": "Machine Learning",
+    "category": "ML",
+    "difficulty": "easy",
+    "question": "What is overfitting in machine learning and how can it be prevented?",
+    "expected_classification": "agree",
+    "ground_truth": "Overfitting occurs when a model fits idiosyncratic noise and spurious correlations in the training sample, yielding poor out-of-sample generalization. Prevention methods include regularization (L1/L2), cross-validation, early stopping, pruning, dropout, data augmentation, and reducing model capacity.",
+    "notes": "Core ML concept with universal agreement."
+  },
+  {
+    "id": "q23",
+    "topic": "Machine Learning",
+    "category": "ML",
+    "difficulty": "medium",
+    "question": "How do gradient descent variants (SGD, Adam, RMSProp) compare in optimization dynamics?",
+    "expected_classification": "partial",
+    "ground_truth": "Standard SGD updates parameters proportionally to the average gradient across mini-batches. RMSProp scales the gradient by a running average of uncentered second moments to handle non-stationary objectives. Adam combines first-moment momentum with second-moment adaptive learning rates. Sources debate generalization performance of Adam vs tuned SGD with momentum.",
+    "notes": "Theoretical and empirical literature debate whether Adam generalizes as well as SGD in vision."
+  },
+  {
+    "id": "q24",
+    "topic": "Machine Learning",
+    "category": "ML",
+    "difficulty": "easy",
+    "question": "What is the bias-variance tradeoff in machine learning?",
+    "expected_classification": "agree",
+    "ground_truth": "The bias-variance tradeoff decomposes expected generalization error into bias (error from erroneous modeling assumptions causing underfitting) and variance (error from sensitivity to small training data fluctuations causing overfitting). Minimizing total test error requires striking an optimal balance between the two.",
+    "notes": "Foundational theoretical concept in statistical learning theory."
+  },
+  {
+    "id": "q25",
+    "topic": "Machine Learning",
+    "category": "ML",
+    "difficulty": "medium",
+    "question": "What are ensemble methods in machine learning and when should they be used?",
+    "expected_classification": "partial",
+    "ground_truth": "Ensemble methods aggregate predictions from multiple base models to produce a stronger predictor. Bagging (e.g., Random Forests) trains independent models on bootstrap samples to reduce variance. Boosting (e.g., XGBoost, LightGBM) sequentially fits models to residual errors to reduce bias. Sources differ on when boosting outperforms bagging for noisy data.",
+    "notes": "Agreement on mechanics, partial differences on noise tolerance and tuning complexity."
+  },
+  {
+    "id": "q26",
+    "topic": "Machine Learning",
+    "category": "ML",
+    "difficulty": "easy",
+    "question": "What is k-fold cross-validation and why is it preferred over a single train-test split?",
+    "expected_classification": "agree",
+    "ground_truth": "k-fold cross-validation partitions the dataset into k equal folds, iteratively training on k-1 folds and evaluating on the held-out fold across k iterations. It provides a less biased and lower-variance estimate of model generalization performance than a single random split, particularly on smaller datasets.",
+    "notes": "Standard validation methodology."
+  },
+  {
+    "id": "q27",
+    "topic": "Machine Learning",
+    "category": "ML",
+    "difficulty": "medium",
+    "question": "How do L1 (Lasso) and L2 (Ridge) regularization differ mathematically and in feature selection?",
+    "expected_classification": "agree",
+    "ground_truth": "L1 regularization adds the sum of absolute weight values (L1 norm) to the loss function, producing sharp geometric corners that drive redundant coefficients exactly to zero, performing intrinsic feature selection. L2 regularization adds the sum of squared weights (L2 norm), which shrinks weights smoothly toward zero without eliminating them entirely.",
+    "notes": "Well-established mathematical properties of convex optimization."
+  },
+  {
+    "id": "q28",
+    "topic": "Machine Learning",
+    "category": "ML",
+    "difficulty": "medium",
+    "question": "What is data leakage in machine learning and what are common sources of it?",
+    "expected_classification": "agree",
+    "ground_truth": "Data leakage occurs when information from outside the training dataset (especially the test or target distribution) inadvertently influences model training, yielding unrealistically optimistic evaluation scores. Common sources include pre-processing/scaling prior to train-test splitting, temporal lookahead bias, and duplicate samples.",
+    "notes": "Universal consensus on causes and prevention."
+  },
+  {
+    "id": "q29",
+    "topic": "Machine Learning",
+    "category": "ML",
+    "difficulty": "hard",
+    "question": "What is the Curse of Dimensionality and how does it impact distance-based algorithms?",
+    "expected_classification": "agree",
+    "ground_truth": "As the number of dimensions increases, the volume of the feature space grows exponentially, causing data points to become extremely sparse. In high-dimensional spaces, pairwise Euclidean distances concentrate around a narrow distribution where all points appear roughly equidistant, degrading algorithms like k-NN and k-means.",
+    "notes": "Standard geometric property of high-dimensional spaces."
+  },
+  {
+    "id": "q30",
+    "topic": "Machine Learning",
+    "category": "ML",
+    "difficulty": "easy",
+    "question": "How does precision differ from recall, and when should PR-AUC be used over ROC-AUC?",
+    "expected_classification": "agree",
+    "ground_truth": "Precision measures the proportion of true positives among all predicted positives, while recall measures the proportion of true positives detected out of all actual positives. When datasets suffer from severe class imbalance, ROC-AUC can present an overly optimistic assessment due to a massive true negative count, making PR-AUC the more informative metric.",
+    "notes": "Standard classification evaluation theory."
+  },
+  {
+    "id": "q31",
+    "topic": "Machine Learning",
+    "category": "ML",
+    "difficulty": "medium",
+    "question": "What is the difference between generative and discriminative models?",
+    "expected_classification": "agree",
+    "ground_truth": "Discriminative models learn the conditional probability distribution P(Y|X) directly to classify inputs into decision boundaries. Generative models learn the joint probability distribution P(X, Y) or data distribution P(X), enabling them to model how data was produced and generate new synthetic samples.",
+    "notes": "Fundamental probabilistic modeling distinction."
+  },
+  {
+    "id": "q32",
+    "topic": "Machine Learning",
+    "category": "ML",
+    "difficulty": "medium",
+    "question": "How do decision trees determine optimal splits (Gini Impurity vs Information Gain)?",
+    "expected_classification": "partial",
+    "ground_truth": "Decision trees evaluate potential feature splits by calculating the impurity reduction of child nodes. Gini impurity measures the probability of misclassifying a randomly chosen element, while Information Gain uses Shannon Entropy to measure disorder reduction. While mathematically distinct, both yield nearly identical trees in practice.",
+    "notes": "Sources agree on math but differ slightly on whether Gini is computationally superior."
+  },
+  {
+    "id": "q33",
+    "topic": "Machine Learning",
+    "category": "ML",
+    "difficulty": "medium",
+    "question": "What is Principal Component Analysis (PCA) and what are its core mathematical assumptions?",
+    "expected_classification": "agree",
+    "ground_truth": "PCA is an orthogonal linear transformation that projects data onto principal directions of maximum variance by computing the eigenvectors of the covariance matrix. Its core assumptions include linearity, continuous variables, high variance denoting high informational content, and orthogonal principal components.",
+    "notes": "Standard linear algebra formulation."
+  },
+  {
+    "id": "q34",
+    "topic": "Machine Learning",
+    "category": "ML",
+    "difficulty": "medium",
+    "question": "How do Support Vector Machines (SVM) utilize the kernel trick for non-linear boundaries?",
+    "expected_classification": "agree",
+    "ground_truth": "The kernel trick computes inner products in a transformed high-dimensional feature space implicitly using kernel functions (such as RBF or polynomial) without explicitly mapping coordinates into that higher-dimensional space. This allows linear maximum-margin hyperplanes to effectively separate non-linearly separable data.",
+    "notes": "Mercer's theorem and SVM dual formulation consensus."
+  },
+  {
+    "id": "q35",
+    "topic": "Machine Learning",
+    "category": "ML",
+    "difficulty": "medium",
+    "question": "Is deep learning always superior to tree-based models (like XGBoost) on tabular data?",
+    "expected_classification": "conflict",
+    "ground_truth": "No. Extensive empirical benchmarks (e.g., Grinsztajn et al., 2022) show that gradient-boosted decision trees consistently outperform deep learning architectures on most tabular datasets with less tuning and lower computational cost. However, specialized tabular neural architectures claim parity on specific large-scale datasets.",
+    "notes": "Controversy between deep learning proponents and empirical tabular ML researchers."
+  },
+  {
+    "id": "q36",
+    "topic": "Machine Learning",
+    "category": "ML",
+    "difficulty": "hard",
+    "question": "What is catastrophic forgetting in continual learning and what mechanisms mitigate it?",
+    "expected_classification": "partial",
+    "ground_truth": "Catastrophic forgetting occurs when a neural network trained sequentially on new tasks abruptly loses its predictive performance on previously mastered tasks due to unconstrained parameter updates. Mitigation approaches include regularized weight consolidation (EWC), episodic memory replay, and dynamic modular sub-networks.",
+    "notes": "Sources agree on the phenomenon; partial variation on the most scalable mitigation."
+  },
+  {
+    "id": "q37",
+    "topic": "Machine Learning",
+    "category": "ML",
+    "difficulty": "medium",
+    "question": "How does learning rate scheduling (cosine annealing vs step decay) affect convergence?",
+    "expected_classification": "partial",
+    "ground_truth": "Learning rate schedules systematically decrease step size during optimization. Step decay abruptly reduces learning rate at fixed epochs, while cosine annealing smoothly lowers the rate following a cosine curve, often paired with warm restarts to escape sharp local minima. Different papers recommend different schedules depending on model scale.",
+    "notes": "Varied empirical preferences across vision vs language models."
+  },
+  {
+    "id": "q38",
+    "topic": "Machine Learning",
+    "category": "ML",
+    "difficulty": "medium",
+    "question": "What is semi-supervised learning and how does pseudo-labeling work?",
+    "expected_classification": "agree",
+    "ground_truth": "Semi-supervised learning leverages a small labeled dataset alongside a large pool of unlabeled data. Pseudo-labeling trains an initial model on labeled data, uses it to predict labels for high-confidence unlabeled samples, adds those pseudo-labeled samples into the training set, and iteratively retrains the model.",
+    "notes": "Standard semi-supervised heuristic."
+  },
+  {
+    "id": "q39",
+    "topic": "Machine Learning",
+    "category": "ML",
+    "difficulty": "hard",
+    "question": "What is covariate shift versus concept drift in production ML systems?",
+    "expected_classification": "agree",
+    "ground_truth": "Covariate shift occurs when the marginal input distribution P(X) changes over time while the conditional ground-truth relationship P(Y|X) remains invariant. Concept drift occurs when the underlying relationship between inputs and targets P(Y|X) fundamentally alters, making historical labels invalid.",
+    "notes": "Established statistical definition in distribution shift literature."
+  },
+  {
+    "id": "q40",
+    "topic": "Machine Learning",
+    "category": "ML",
+    "difficulty": "hard",
+    "question": "Does increasing dataset size always improve model performance linearly?",
+    "expected_classification": "conflict",
+    "ground_truth": "No. In accordance with power-law empirical scaling laws, test error decreases as a power-law with dataset size rather than linearly, exhibiting diminishing marginal returns. Furthermore, adding low-quality, biased, or noisy data can actually degrade model performance despite increasing sample volume.",
+    "notes": "Simplistic claims assume linear improvement, whereas statistical scaling laws prove power-law saturation."
+  },
+  {
+    "id": "q41",
+    "topic": "Neural Networks",
+    "category": "DL",
+    "difficulty": "easy",
+    "question": "What is backpropagation and how does it compute gradients in neural networks?",
+    "expected_classification": "agree",
+    "ground_truth": "Backpropagation is the efficient algorithm for computing the partial derivatives of an objective loss function with respect to all trainable weights using the chain rule of calculus. It computes activations forward, compares outputs to targets, and propagates error signals backward through each layer to update parameters.",
+    "notes": "Foundational optimization mechanism in deep learning."
+  },
+  {
+    "id": "q42",
+    "topic": "Neural Networks",
+    "category": "DL",
+    "difficulty": "easy",
+    "question": "What are activation functions and why are they indispensable in neural networks?",
+    "expected_classification": "agree",
+    "ground_truth": "Activation functions introduce non-linear mathematical operations into network layers. Without non-linear activations, any multi-layer neural network collapses into a single linear matrix transformation regardless of depth, rendering it incapable of learning non-linear function approximations.",
+    "notes": "Universal theorem on multi-layer perceptron expressiveness."
+  },
+  {
+    "id": "q43",
+    "topic": "Neural Networks",
+    "category": "DL",
+    "difficulty": "medium",
+    "question": "What is batch normalization and what core problem does it solve?",
+    "expected_classification": "agree",
+    "ground_truth": "Batch normalization standardizes layer inputs across the mini-batch to zero mean and unit variance, followed by learnable affine scaling and shifting parameters. It stabilizes training dynamics, smooths the optimization loss landscape, permits significantly higher learning rates, and reduces dependence on hyperparameter initialization.",
+    "notes": "Introduced by Ioffe & Szegedy (2015); loss landscape smoothing proven by Santurkar et al. (2018)."
+  },
+  {
+    "id": "q44",
+    "topic": "Neural Networks",
+    "category": "DL",
+    "difficulty": "medium",
+    "question": "What is the vanishing gradient problem and how do modern architectures solve it?",
+    "expected_classification": "partial",
+    "ground_truth": "The vanishing gradient problem occurs when error gradients shrink exponentially as they propagate backward through deep layers, halting learning in early layers. It is mitigated by using non-saturating activations (e.g., ReLU/GELU), residual skip connections, normalization layers, and specialized parameter initializations (He/Xavier).",
+    "notes": "Agreement on root cause; partial differences on which architectural fix is primary."
+  },
+  {
+    "id": "q45",
+    "topic": "Neural Networks",
+    "category": "DL",
+    "difficulty": "easy",
+    "question": "How do Convolutional Neural Networks (CNNs) differ from Fully Connected Networks?",
+    "expected_classification": "agree",
+    "ground_truth": "Fully connected layers link every input neuron to every output neuron, resulting in millions of parameters and ignoring spatial topology. CNNs exploit parameter sharing and local receptive fields using sliding filters, enforcing translation equivariance and drastically reducing parameter counts on grid-structured inputs.",
+    "notes": "Classical computer vision architecture distinction."
+  },
+  {
+    "id": "q46",
+    "topic": "Neural Networks",
+    "category": "DL",
+    "difficulty": "easy",
+    "question": "What are residual skip connections (ResNets) and why do they enable very deep networks?",
+    "expected_classification": "agree",
+    "ground_truth": "Residual connections add the identity input of a layer directly to its output: F(x) + x. This creates an unhindered direct gradient highway that flows backward without attenuation through arbitrary depths, resolving optimization degradation and allowing networks with hundreds of layers to train successfully.",
+    "notes": "Seminal contribution of He et al. (2015)."
+  },
+  {
+    "id": "q47",
+    "topic": "Neural Networks",
+    "category": "DL",
+    "difficulty": "medium",
+    "question": "What is Layer Normalization and why is it preferred over Batch Normalization in NLP?",
+    "expected_classification": "agree",
+    "ground_truth": "Batch Normalization normalizes across batch elements for each feature, which fails when batch sizes are small or sequence lengths vary. Layer Normalization normalizes across all features for each individual token independently, making it invariant to batch size and natural for dynamic-length sequences in NLP and Transformers.",
+    "notes": "Standard Ba, Kiros, Hinton (2016) formulation."
+  },
+  {
+    "id": "q48",
+    "topic": "Neural Networks",
+    "category": "DL",
+    "difficulty": "easy",
+    "question": "How does Dropout regularize deep neural networks during training versus inference?",
+    "expected_classification": "agree",
+    "ground_truth": "During training, Dropout randomly deactivates a fraction p of neurons on each forward pass, preventing neurons from co-adapting and effectively training an ensemble of subnetworks. During inference, all neurons remain active, and activations are scaled by (1-p) to match the expected value at test time.",
+    "notes": "Standard Srivastava et al. (2014) dropout formulation."
+  },
+  {
+    "id": "q49",
+    "topic": "Neural Networks",
+    "category": "DL",
+    "difficulty": "medium",
+    "question": "What are the structural differences between standard RNNs, LSTMs, and GRUs?",
+    "expected_classification": "agree",
+    "ground_truth": "Standard RNNs suffer from vanishing gradients across sequence steps due to simple continuous matrix multiplications. LSTMs introduce an internal cell state regulated by input, forget, and output gates. GRUs simplify LSTMs by merging cell and hidden states and using only reset and update gates, achieving comparable performance with fewer parameters.",
+    "notes": "Standard sequence modeling historical taxonomy."
+  },
+  {
+    "id": "q50",
+    "topic": "Neural Networks",
+    "category": "DL",
+    "difficulty": "medium",
+    "question": "What is the purpose of He (Kaiming) versus Xavier (Glorot) weight initialization?",
+    "expected_classification": "agree",
+    "ground_truth": "Both initialization methods set weight variances to preserve activation and gradient variance across layers to prevent signal explosion or collapse. Xavier initialization assumes symmetric, zero-centered linear or sigmoid/tanh activations. He initialization accounts for ReLU rectifying half the distribution to zero by doubling the variance scaling factor.",
+    "notes": "Established mathematical derivation in deep learning literature."
+  },
+  {
+    "id": "q51",
+    "topic": "Neural Networks",
+    "category": "DL",
+    "difficulty": "medium",
+    "question": "How do standard Autoencoders differ from Variational Autoencoders (VAEs)?",
+    "expected_classification": "agree",
+    "ground_truth": "Standard autoencoders learn a deterministic bottleneck compression code that can leave discontinuous gaps in the latent space. VAEs enforce a probabilistic prior (typically standard normal) over the latent space by mapping inputs to mean and variance vectors, optimized via reconstruction loss and a Kullback-Leibler (KL) divergence penalty.",
+    "notes": "Kingma & Welling (2013) generative modeling foundation."
+  },
+  {
+    "id": "q52",
+    "topic": "Neural Networks",
+    "category": "DL",
+    "difficulty": "medium",
+    "question": "What is the function of learning rate warm-up in deep neural network optimization?",
+    "expected_classification": "agree",
+    "ground_truth": "At the start of training, model weights are randomized and gradients are large and noisy. Learning rate warm-up gradually increases the learning rate from near zero to its peak value over initial steps, preventing early unstable parameter updates and stabilizing subsequent adaptive optimizer statistics.",
+    "notes": "Standard empirical practice across deep learning models."
+  },
+  {
+    "id": "q53",
+    "topic": "Neural Networks",
+    "category": "DL",
+    "difficulty": "hard",
+    "question": "How do Generative Adversarial Networks (GANs) reach equilibrium during training?",
+    "expected_classification": "partial",
+    "ground_truth": "GANs frame training as a two-player zero-sum minimax game between a Generator and a Discriminator aiming for a Nash equilibrium where the discriminator cannot distinguish synthetic from real samples (predicting 0.5 probability). In practice, non-convex optimization frequently produces non-convergent cyclical oscillations rather than true equilibrium.",
+    "notes": "Theoretical game-theoretic equilibrium vs practical non-convergence and instability."
+  },
+  {
+    "id": "q54",
+    "topic": "Neural Networks",
+    "category": "DL",
+    "difficulty": "hard",
+    "question": "What causes mode collapse in GANs and what methods effectively mitigate it?",
+    "expected_classification": "partial",
+    "ground_truth": "Mode collapse occurs when the generator learns to produce only a tiny subset of diverse data modes that successfully fools the discriminator, ignoring the full distribution. Mitigation techniques include Wasserstein GAN with Gradient Penalty (WGAN-GP), minibatch discrimination, and unrolled GANs.",
+    "notes": "Sources agree on the failure mode; evaluate Wasserstein vs architectural fixes differently."
+  },
+  {
+    "id": "q55",
+    "topic": "Neural Networks",
+    "category": "DL",
+    "difficulty": "medium",
+    "question": "How does mixed-precision training (FP16/BF16 with FP32 master weights) accelerate training?",
+    "expected_classification": "agree",
+    "ground_truth": "Mixed-precision executes matrix forward and backward passes using 16-bit floating point formats (FP16 or BF16) to leverage specialized GPU Tensor Cores and halve memory bandwidth. A master copy of FP32 weights is maintained for optimizer updates, accompanied by loss scaling in FP16 to prevent underflowing small gradients.",
+    "notes": "Micikevicius et al. (2017) mixed precision standard."
+  },
+  {
+    "id": "q56",
+    "topic": "Neural Networks",
+    "category": "DL",
+    "difficulty": "hard",
+    "question": "What are Graph Neural Networks (GNNs) and how does message passing operate?",
+    "expected_classification": "partial",
+    "ground_truth": "GNNs process graph-structured data where nodes have arbitrary topological connections. Message passing iteratively aggregates feature vectors from adjacent neighboring nodes via permutation-invariant aggregation functions (sum, mean, max) and updates the target node's representation using a neural transformation layer.",
+    "notes": "Sources differ on the expressive power limitations of 1-Weisfeiler-Lehman (1-WL) test."
+  },
+  {
+    "id": "q57",
+    "topic": "Neural Networks",
+    "category": "DL",
+    "difficulty": "hard",
+    "question": "How do Vision Transformers (ViT) compare to ConvNets regarding inductive bias and data hunger?",
+    "expected_classification": "conflict",
+    "ground_truth": "CNNs possess hard-coded inductive biases including translation invariance and local two-dimensional pixel correlation, enabling strong performance on small-to-moderate datasets. Vision Transformers lack these spatial priors and require massive pre-training datasets (e.g., JFT-300M) or heavy augmentation, after which they surpass ConvNets at scale.",
+    "notes": "Debate between pure ViT scaling and modern modernized ConvNets (e.g., ConvNeXt)."
+  },
+  {
+    "id": "q58",
+    "topic": "Neural Networks",
+    "category": "DL",
+    "difficulty": "easy",
+    "question": "What is gradient clipping and why is it necessary in recurrent or deep architectures?",
+    "expected_classification": "agree",
+    "ground_truth": "Gradient clipping scales down the gradient vector if its L2 norm exceeds a pre-defined threshold before the optimizer applies weight updates. It prevents exploding gradients from causing catastrophic numerical overflow (NaNs) or destabilizing parameter updates in deep or recurrent networks.",
+    "notes": "Standard safeguard in deep network optimization."
+  },
+  {
+    "id": "q59",
+    "topic": "Neural Networks",
+    "category": "DL",
+    "difficulty": "medium",
+    "question": "What is knowledge distillation and how does temperature scaling affect soft targets?",
+    "expected_classification": "agree",
+    "ground_truth": "Knowledge distillation transfers knowledge from a large teacher model to a compact student model. Applying a temperature parameter T > 1 to the softmax function softens the output probability distribution, exposing the dark knowledge—subtle relative probabilities across incorrect classes—that guides student training.",
+    "notes": "Hinton, Vinyals, Dean (2015) knowledge distillation formulation."
+  },
+  {
+    "id": "q60",
+    "topic": "Neural Networks",
+    "category": "DL",
+    "difficulty": "medium",
+    "question": "Does adding more layers to an unregularized deep neural network always reduce training and test loss?",
+    "expected_classification": "conflict",
+    "ground_truth": "No. While increasing capacity can theoretically decrease training loss toward zero, without proper residual connections or normalization, optimization degrades and training loss can paradoxically rise. Moreover, excessive capacity without regularization causes severe overfitting, increasing test loss.",
+    "notes": "Naive intuition expects monotonic improvement; theoretical and empirical proof demonstrates degradation."
+  },
+  {
+    "id": "q61",
+    "topic": "Transformers",
+    "category": "Transformers",
+    "difficulty": "easy",
+    "question": "What is the self-attention mechanism in Transformers?",
+    "expected_classification": "agree",
+    "ground_truth": "Self-attention maps input sequence tokens into Query, Key, and Value vector representations. It computes scaled dot-product attention scores between queries and keys, applies softmax to determine attention weights, and computes a weighted sum of values, enabling every token to contextualize relationships with all other sequence tokens in parallel.",
+    "notes": "Vaswani et al. (2017) 'Attention Is All You Need' foundation."
+  },
+  {
+    "id": "q62",
+    "topic": "Transformers",
+    "category": "Transformers",
+    "difficulty": "easy",
+    "question": "What is the purpose of positional encodings in Transformer models?",
+    "expected_classification": "agree",
+    "ground_truth": "Because the self-attention operation is completely permutation-equivariant and processes all tokens concurrently without sequential recurrence, positional encodings (either absolute sinusoidal, learned vectors, or relative encodings) inject token order information into embedding vectors so the model can distinguish word sequence order.",
+    "notes": "Universal consensus on permutation invariance of Transformer attention."
+  },
+  {
+    "id": "q63",
+    "topic": "Transformers",
+    "category": "Transformers",
+    "difficulty": "medium",
+    "question": "How does BERT differ from GPT in architecture and pre-training objectives?",
+    "expected_classification": "conflict",
+    "ground_truth": "BERT utilizes a bidirectional Transformer encoder trained on Masked Language Modeling (MLM) and Next Sentence Prediction, making it optimal for understanding and classification tasks. GPT employs a causal autoregressive Transformer decoder with masked attention trained to predict the next token, optimized for generative synthesis.",
+    "notes": "Sources highlight distinct design trade-offs: bidirectional context vs autoregressive generation."
+  },
+  {
+    "id": "q64",
+    "topic": "Transformers",
+    "category": "Transformers",
+    "difficulty": "hard",
+    "question": "What are the computational complexity bottlenecks of self-attention and how are they addressed?",
+    "expected_classification": "partial",
+    "ground_truth": "Standard self-attention requires O(N^2) time and memory complexity with sequence length N due to the full N-by-N attention matrix computation. Solutions include linear attention approximations, sparse/sliding-window attention (Longformer), kernel tricks, and IO-aware GPU SRAM tiling algorithms like FlashAttention.",
+    "notes": "Approximation methods (sparse/linear) vs hardware-level exact acceleration (FlashAttention)."
+  },
+  {
+    "id": "q65",
+    "topic": "Transformers",
+    "category": "Transformers",
+    "difficulty": "easy",
+    "question": "What is the difference between encoder-decoder, encoder-only, and decoder-only architectures?",
+    "expected_classification": "agree",
+    "ground_truth": "Encoder-only models (BERT) use bidirectional attention for classification/extraction. Decoder-only models (GPT, LLaMA) use causal masking for autoregressive text generation. Encoder-decoder models (T5, BART) process inputs bidirectionally in the encoder and generate cross-attended output sequences autoregressively in the decoder.",
+    "notes": "Standard taxonomic classification of Transformer variants."
+  },
+  {
+    "id": "q66",
+    "topic": "Transformers",
+    "category": "Transformers",
+    "difficulty": "medium",
+    "question": "What is Multi-Head Attention and what specific advantage does multiple heads provide?",
+    "expected_classification": "agree",
+    "ground_truth": "Multi-Head Attention linearly projects Queries, Keys, and Values into h distinct lower-dimensional subspaces, computes attention in parallel across each head, concatenates results, and projects back. This enables the model to simultaneously attend to information from different representation subspaces and diverse positions.",
+    "notes": "Core mathematical component of the Transformer block."
+  },
+  {
+    "id": "q67",
+    "topic": "Transformers",
+    "category": "Transformers",
+    "difficulty": "hard",
+    "question": "How does FlashAttention optimize the self-attention computation on GPUs without approximations?",
+    "expected_classification": "agree",
+    "ground_truth": "FlashAttention uses classical online softmax tiling to compute exact self-attention in blocks within fast GPU SRAM memory without materializing the massive N-by-N attention matrix to slow high-bandwidth GPU HBM memory. This reduces memory footprint from quadratic to linear and delivers 2-4x speedups without changing output math.",
+    "notes": "Dao et al. (Stanford, 2022) exact IO-aware tiling."
+  },
+  {
+    "id": "q68",
+    "topic": "Transformers",
+    "category": "Transformers",
+    "difficulty": "medium",
+    "question": "What is Rotary Position Embedding (RoPE) and why is it preferred in modern LLMs like LLaMA?",
+    "expected_classification": "agree",
+    "ground_truth": "RoPE encodes relative position by multiplying Query and Key vectors with a 2D rotational matrix that rotates representations according to token index. It allows relative position information to emerge naturally from the dot product while preserving absolute token coordinates, and enables length extrapolation to longer contexts.",
+    "notes": "Su et al. (2021) RoFormer formulation adopted across modern open LLMs."
+  },
+  {
+    "id": "q69",
+    "topic": "Transformers",
+    "category": "Transformers",
+    "difficulty": "medium",
+    "question": "What is the difference between Pre-LayerNorm and Post-LayerNorm in Transformer blocks?",
+    "expected_classification": "agree",
+    "ground_truth": "Post-LN applies layer normalization after the residual addition, which causes gradient scale mismatch in deep layers and requires strict learning rate warmups. Pre-LN places normalization inside the residual branch prior to self-attention and MLP blocks, keeping the main residual path clean and enabling stable training without delicate warm-up schedules.",
+    "notes": "Standard architectural shift from original Vaswani to modern GPT/LLaMA architectures."
+  },
+  {
+    "id": "q70",
+    "topic": "Transformers",
+    "category": "Transformers",
+    "difficulty": "medium",
+    "question": "How does Low-Rank Adaptation (LoRA) achieve parameter-efficient fine-tuning (PEFT)?",
+    "expected_classification": "agree",
+    "ground_truth": "LoRA freezes the pre-trained weight matrix W and injects trainable rank decomposition matrices: delta W = B * A, where rank r is much smaller than model dimensions. This reduces trainable parameters by over 99% while matching full fine-tuning performance, and adapter weights can be merged back into base weights with zero inference latency.",
+    "notes": "Hu et al. (Microsoft, 2021) LoRA formulation."
+  },
+  {
+    "id": "q71",
+    "topic": "Transformers",
+    "category": "Transformers",
+    "difficulty": "hard",
+    "question": "What is QLoRA and how does 4-bit NormalFloat (NF4) quantization preserve accuracy?",
+    "expected_classification": "agree",
+    "ground_truth": "QLoRA quantizes pre-trained base model weights to a specialized 4-bit NormalFloat (NF4) format that has equal information-theoretic quantiles for normally distributed weights. Paired with double quantization and paged optimizers, it enables fine-tuning a 65B model on a single 48GB GPU without performance degradation.",
+    "notes": "Dettmers et al. (2023) QLoRA breakthrough."
+  },
+  {
+    "id": "q72",
+    "topic": "Transformers",
+    "category": "Transformers",
+    "difficulty": "hard",
+    "question": "What is Mixture of Experts (MoE) in architectures like Mixtral and how does top-k routing operate?",
+    "expected_classification": "partial",
+    "ground_truth": "MoE replaces standard feed-forward MLP layers with multiple independent 'expert' sub-networks. A learned gating router computes softmax probabilities over all experts for each token, dynamically activating only the top-k (typically top-2) experts. This drastically expands total parameter capacity while keeping active FLOPs per token constant.",
+    "notes": "Sources agree on architecture; partial divergence on routing load balancing strategies."
+  },
+  {
+    "id": "q73",
+    "topic": "Transformers",
+    "category": "Transformers",
+    "difficulty": "hard",
+    "question": "How does Direct Preference Optimization (DPO) compare to RLHF with PPO?",
+    "expected_classification": "partial",
+    "ground_truth": "RLHF with PPO fits an explicit reward model to human preferences, then runs reinforcement learning with policy gradient updates and a KL penalty. DPO mathematically reformulates the objective to derive closed-form loss directly over preference pairs (chosen vs rejected) without training a separate reward model or using complex RL stability tuning.",
+    "notes": "Rafailov et al. (2023); debate over whether DPO handles complex multi-turn or out-of-distribution reasoning as well as PPO."
+  },
+  {
+    "id": "q74",
+    "topic": "Transformers",
+    "category": "Transformers",
+    "difficulty": "hard",
+    "question": "What is speculative decoding and how does it accelerate autoregressive token generation?",
+    "expected_classification": "agree",
+    "ground_truth": "Speculative decoding uses a small, fast draft model to speculate K candidate tokens autoregressively. The large target model then evaluates all K tokens in a single parallel forward pass, accepting draft tokens that match target distribution and resampling upon divergence. This speeds up latency 2-3x without changing output distribution.",
+    "notes": "Leviathan et al. (2023) / Chen et al. (2023) speculative decoding."
+  },
+  {
+    "id": "q75",
+    "topic": "Transformers",
+    "category": "Transformers",
+    "difficulty": "hard",
+    "question": "What is the KV Cache in LLMs, and how do Multi-Query (MQA) and Grouped-Query Attention (GQA) reduce it?",
+    "expected_classification": "agree",
+    "ground_truth": "During autoregressive decoding, recomputing previous token keys and values is wasteful; the KV Cache stores them in GPU memory. MQA uses a single Key-Value head shared across all Query heads. GQA groups Query heads into clusters sharing KV heads, reducing KV cache memory footprint by 8x with negligible quality loss.",
+    "notes": "Shazeer (2019) MQA and Ainslie et al. (2023) GQA."
+  },
+  {
+    "id": "q76",
+    "topic": "Transformers",
+    "category": "Transformers",
+    "difficulty": "medium",
+    "question": "What are the primary root causes of hallucinations in Large Language Models?",
+    "expected_classification": "partial",
+    "ground_truth": "Hallucinations stem from pre-training on noisy/conflicting web corpora, statistical next-token objective prioritizing linguistic fluency over factual truth, divergence between training data and generation prompt distribution, and model sycophancy. Sources categorize hallucinations into factual fabrication vs context inconsistency.",
+    "notes": "Varied taxonomic breakdowns of hallucination root causes across survey papers."
+  },
+  {
+    "id": "q77",
+    "topic": "Transformers",
+    "category": "Transformers",
+    "difficulty": "medium",
+    "question": "What did the Chinchilla scaling laws reveal regarding model parameter size versus training tokens?",
+    "expected_classification": "agree",
+    "ground_truth": "Hoffmann et al. (DeepMind, 2022) revealed that existing large models (like GPT-3) were substantially undertrained. For compute-optimal training, model parameter size and the number of training tokens should scale in equal 1:1 proportion, demonstrating that smaller models trained on significantly more tokens outperform larger undertrained models.",
+    "notes": "Empirical consensus overturning Kaplan et al.'s earlier parameter-heavy scaling formulation."
+  },
+  {
+    "id": "q78",
+    "topic": "Transformers",
+    "category": "Transformers",
+    "difficulty": "easy",
+    "question": "How do temperature, top-k, and top-p (nucleus) sampling affect generation randomness?",
+    "expected_classification": "agree",
+    "ground_truth": "Temperature scales the logits before softmax (lower temperature sharpens distribution toward greedy selection; higher flattens it for creativity). Top-k truncates candidates to the k highest-probability tokens. Top-p (nucleus sampling) dynamically selects the smallest set of tokens whose cumulative probability exceeds threshold p.",
+    "notes": "Universal decoding parameter mechanics."
+  },
+  {
+    "id": "q79",
+    "topic": "Transformers",
+    "category": "Transformers",
+    "difficulty": "medium",
+    "question": "Can prompt engineering completely substitute for fine-tuning in specialized domain reasoning?",
+    "expected_classification": "conflict",
+    "ground_truth": "No. While advanced prompting (Chain-of-Thought, ReAct, few-shot) unlocks latent in-context capabilities, fine-tuning is necessary to alter response style, instill specialized domain vocabulary, learn proprietary formats, and reduce token latency and costs. Some practitioners argue prompting suffices for general tasks, but empirical benchmarks show fine-tuning dominates complex domain-specific tasks.",
+    "notes": "Sharp debate between prompt-engineering advocates and domain-adaptation specialists."
+  },
+  {
+    "id": "q80",
+    "topic": "Transformers",
+    "category": "Transformers",
+    "difficulty": "easy",
+    "question": "Does an LLM actually update any internal weights during in-context few-shot learning?",
+    "expected_classification": "agree",
+    "ground_truth": "No. During in-context few-shot prompting, the model weights remain completely static and frozen. The model performs meta-computation within its self-attention activations across the provided prompt context without applying backpropagation or altering any stored parameter values.",
+    "notes": "Fundamental conceptual clarity in LLM operation."
+  },
+  {
+    "id": "q81",
+    "topic": "Multi-Source Conflict & Synthesis",
+    "category": "MultiSource_Conflict",
+    "difficulty": "easy",
+    "question": "How should an automated AI tutoring system detect and flag contradictory statements between learning materials?",
+    "expected_classification": "agree",
+    "ground_truth": "An automated AI tutor should extract factual claims per source, perform cross-source Natural Language Inference (NLI) or semantic comparison to classify agreement status (agree, partial, conflict), explicitly highlight divergent viewpoints using provenance tags, and explain why differences arise rather than silently averaging conflicting assertions.",
+    "notes": "Core design thesis of the Multi-Source AI Tutor."
+  },
+  {
+    "id": "q82",
+    "topic": "Multi-Source Conflict & Synthesis",
+    "category": "MultiSource_Conflict",
+    "difficulty": "medium",
+    "question": "What is the difference between a direct factual contradiction and a difference in pedagogical framing?",
+    "expected_classification": "partial",
+    "ground_truth": "A direct factual contradiction occurs when two sources assert mutually exclusive empirical claims (e.g., conflicting dates, numerical constants, or opposite causal effects). Pedagogical framing differences occur when sources describe the same underlying principle using different metaphors, abstraction levels, or complementary perspectives without violating factual truth.",
+    "notes": "Key distinction between hard factual errors and soft conceptual variance."
+  },
+  {
+    "id": "q83",
+    "topic": "Multi-Source Conflict & Synthesis",
+    "category": "MultiSource_Conflict",
+    "difficulty": "medium",
+    "question": "How should temporal publication recency versus source authority be balanced when resolving conflicting facts?",
+    "expected_classification": "partial",
+    "ground_truth": "For rapidly evolving empirical domains (such as AI benchmarks or software APIs), recent publications take precedence over older authoritative works. For foundational scientific theories, peer-reviewed textbook authority takes precedence over recent informal blog posts. A robust tutor explains both the historical standard and recent developments.",
+    "notes": "Context-dependent trade-off between recency and institutional authority."
+  },
+  {
+    "id": "q84",
+    "topic": "Multi-Source Conflict & Synthesis",
+    "category": "MultiSource_Conflict",
+    "difficulty": "medium",
+    "question": "When two reputable textbooks use conflicting notation or terminology for the same mathematical concept, how should an AI tutor resolve it?",
+    "expected_classification": "agree",
+    "ground_truth": "The AI tutor must not treat notation differences as mathematical errors. It should explicitly map the equivalent variables side-by-side (e.g., showing that vector w in Source A corresponds to theta in Source B), explain that both represent the same underlying concept, and adopt a consistent notation while acknowledging the alternatives.",
+    "notes": "Crucial requirement for educational multi-source reconciliation."
+  },
+  {
+    "id": "q85",
+    "topic": "Multi-Source Conflict & Synthesis",
+    "category": "MultiSource_Conflict",
+    "difficulty": "medium",
+    "question": "What distinguishes established academic consensus from controversial or unsettled topics in multi-source QA?",
+    "expected_classification": "agree",
+    "ground_truth": "Academic consensus reflects broad convergence across peer-reviewed literature where alternative claims represent outlier or superseded viewpoints. Unsettled topics feature active theoretical or empirical disputes among top experts. A responsible AI tutor must present unsettled topics with balanced, neutral multi-perspective arguments.",
+    "notes": "Epistemic classification standard."
+  },
+  {
+    "id": "q86",
+    "topic": "Multi-Source Conflict & Synthesis",
+    "category": "MultiSource_Conflict",
+    "difficulty": "hard",
+    "question": "In safety-critical or medical domains, what protocol should an AI tutor follow when authoritative sources give conflicting recommendations?",
+    "expected_classification": "partial",
+    "ground_truth": "The tutor must never fabricate a single averaged compromise recommendation. It should explicitly cite the conflicting institutional guidelines (e.g., CDC vs WHO), specify the differing conditional criteria each guideline assumes, flag the high-uncertainty nature of the decision, and recommend consulting certified human professionals.",
+    "notes": "Safety guidelines demand explicit attribution and refusal to synthesize arbitrary compromises."
+  },
+  {
+    "id": "q87",
+    "topic": "Multi-Source Conflict & Synthesis",
+    "category": "MultiSource_Conflict",
+    "difficulty": "hard",
+    "question": "How does cross-document co-reference resolution assist in multi-source fact synthesis?",
+    "expected_classification": "partial",
+    "ground_truth": "Cross-document co-reference resolution links mentions of the same real-world entity, concept, or event across heterogeneous source texts that use distinct aliases or pronouns. This prevents false contradiction detection where two documents discuss distinct entities using similar names or describe the same entity with distinct vocabularies.",
+    "notes": "Core NLP problem in multi-document summarization."
+  },
+  {
+    "id": "q88",
+    "topic": "Multi-Source Conflict & Synthesis",
+    "category": "MultiSource_Conflict",
+    "difficulty": "medium",
+    "question": "What is the difference between semantic entailment and contradiction in Natural Language Inference (NLI) applied to multi-source QA?",
+    "expected_classification": "agree",
+    "ground_truth": "In NLI, given a premise from Source A and a hypothesis from Source B: Entailment indicates that the truth of Source A guarantees the truth of Source B. Contradiction indicates that Source A and Source B cannot both be true simultaneously. Neutral indicates that both statements can coexist without confirming or refuting each other.",
+    "notes": "Classical tripartite NLI classification (Entailment, Neutral, Contradiction)."
+  },
+  {
+    "id": "q89",
+    "topic": "Multi-Source Conflict & Synthesis",
+    "category": "MultiSource_Conflict",
+    "difficulty": "easy",
+    "question": "Should an AI tutor pick a single 'correct' answer when academic sources dispute an unresolved scientific question?",
+    "expected_classification": "conflict",
+    "ground_truth": "No. Forcing a single 'correct' answer on disputed or unresolved academic questions misinforms students and introduces severe hallucinated certainty. The educational AI tutor should outline the competing hypotheses, summarize supporting evidence for each, and explain the current state of scientific inquiry.",
+    "notes": "Sources debate whether students benefit more from simplified single answers or balanced nuance."
+  },
+  {
+    "id": "q90",
+    "topic": "Multi-Source Conflict & Synthesis",
+    "category": "MultiSource_Conflict",
+    "difficulty": "easy",
+    "question": "How does source provenance tagging (e.g. [Source A], [Source B]) improve transparency in multi-source synthesis?",
+    "expected_classification": "agree",
+    "ground_truth": "Inline provenance tags directly map specific synthesized claims to their exact originating document. This enables student verification, prevents opaque model confabulation, exposes which sources support specific claims, and builds trust by making conflicting viewpoints transparently auditable.",
+    "notes": "Key feature and usability metric of the Multi-Source AI Tutor."
+  },
+  {
+    "id": "q91",
+    "topic": "Multi-Source Conflict & Synthesis",
+    "category": "MultiSource_Conflict",
+    "difficulty": "medium",
+    "question": "What is the 'echo chamber' or source redundancy problem during automated source discovery?",
+    "expected_classification": "partial",
+    "ground_truth": "Source redundancy occurs when automated discovery retrieves multiple web documents that duplicate the same underlying syndicated wire report, press release, or Wikipedia article. This creates an illusion of cross-source consensus when in reality only a single primary source exists.",
+    "notes": "Information retrieval challenge in automated multi-source gathering."
+  },
+  {
+    "id": "q92",
+    "topic": "Multi-Source Conflict & Synthesis",
+    "category": "MultiSource_Conflict",
+    "difficulty": "medium",
+    "question": "How should an AI tutor resolve conflicts caused by differing definitions of standard terms (e.g. AI vs Machine Learning)?",
+    "expected_classification": "partial",
+    "ground_truth": "The tutor should clarify the scope and context of each definition: identifying Artificial Intelligence as the broader umbrella discipline of building intelligent systems, and Machine Learning as the specific subset focused on learning from data. It clarifies that differing source usage reflects nested taxonomic hierarchy rather than factual disagreement.",
+    "notes": "Resolution of taxonomic versus colloquial definitions."
+  },
+  {
+    "id": "q93",
+    "topic": "Multi-Source Conflict & Synthesis",
+    "category": "MultiSource_Conflict",
+    "difficulty": "easy",
+    "question": "In multi-source RAG, what occurs when Source A is from 2024 while Source B is from 2018 regarding benchmark state-of-the-art?",
+    "expected_classification": "conflict",
+    "ground_truth": "This creates an apparent factual conflict where both sources make mutually exclusive claims regarding the 'current state-of-the-art'. The AI tutor must perform temporal reconciliation, recognizing that Source B describes historical 2018 state-of-the-art, while Source A represents modern 2024 results.",
+    "notes": "Temporal discrepancy is one of the most common false conflicts in multi-source ingestion."
+  },
+  {
+    "id": "q94",
+    "topic": "Multi-Source Conflict & Synthesis",
+    "category": "MultiSource_Conflict",
+    "difficulty": "hard",
+    "question": "How does epistemic uncertainty differ from aleatoric uncertainty in conflicting source materials?",
+    "expected_classification": "partial",
+    "ground_truth": "Epistemic uncertainty arises from incomplete knowledge or lack of sufficient data, which can be reduced by discovering additional authoritative sources. Aleatoric uncertainty stems from intrinsic stochasticity or variability in the underlying system that cannot be resolved even with infinite source material.",
+    "notes": "Theoretical distinction in probabilistic knowledge representation."
+  },
+  {
+    "id": "q95",
+    "topic": "Multi-Source Conflict & Synthesis",
+    "category": "MultiSource_Conflict",
+    "difficulty": "medium",
+    "question": "What evaluation metrics best assess whether an AI tutor faithfully attributes claims to their sources?",
+    "expected_classification": "agree",
+    "ground_truth": "Faithfulness and Citation Precision/Recall metrics: Citation Precision measures whether a cited source passage actually supports the synthesized claim. Citation Recall measures whether every factual claim derived from a source receives an inline citation. Faithfulness verifies zero ungrounded statements exist in the answer.",
+    "notes": "RAGAS and ALCE citation evaluation framework standard."
+  },
+  {
+    "id": "q96",
+    "topic": "Multi-Source Conflict & Synthesis",
+    "category": "MultiSource_Conflict",
+    "difficulty": "hard",
+    "question": "How can claim-level extraction and graph-based reconciliation identify subtle cross-document contradictions?",
+    "expected_classification": "partial",
+    "ground_truth": "Instead of comparing entire documents, the system decomposes text into atomic Subject-Predicate-Object claim triplets. It aligns shared subjects and relations into a knowledge graph, and detects contradictions by identifying incompatible object values or opposing polarity predicates across overlapping edges.",
+    "notes": "Advanced multi-document contradiction detection literature."
+  },
+  {
+    "id": "q97",
+    "topic": "Multi-Source Conflict & Synthesis",
+    "category": "MultiSource_Conflict",
+    "difficulty": "medium",
+    "question": "Is source credibility best evaluated strictly by domain reputation (e.g. .edu vs .com) or content consistency?",
+    "expected_classification": "conflict",
+    "ground_truth": "Neither alone is sufficient. Relying solely on top-level domain (.edu) can miss predatory university journals or student blogs, while relying solely on content consistency penalizes valid novel discoveries that contradict widespread conventional misconceptions. A robust system combines domain provenance, citation volume, and internal factuality checks.",
+    "notes": "Debate between heuristic URL filtering and content-based verifiability."
+  },
+  {
+    "id": "q98",
+    "topic": "Multi-Source Conflict & Synthesis",
+    "category": "MultiSource_Conflict",
+    "difficulty": "medium",
+    "question": "How should an AI tutor present partial agreements where sources agree on a principle but provide conflicting numerical figures?",
+    "expected_classification": "partial",
+    "ground_truth": "The tutor should highlight the shared conceptual principle first (e.g., both agree that model accuracy improves with compute), then explicitly detail the numerical discrepancies in a comparative table or list, citing the distinct experimental conditions, datasets, or measurement methodologies that explain the variance.",
+    "notes": "Educational strategy for partially aligned empirical findings."
+  },
+  {
+    "id": "q99",
+    "topic": "Multi-Source Conflict & Synthesis",
+    "category": "MultiSource_Conflict",
+    "difficulty": "hard",
+    "question": "What is the risk of model sycophancy when an AI tutor attempts to reconcile conflicting student beliefs with indexed textbooks?",
+    "expected_classification": "partial",
+    "ground_truth": "Sycophancy occurs when an LLM prioritizes agreeing with the user's misconceptions over maintaining fidelity to verified factual context. In tutoring, this can lead the system to validate a student's incorrect premise rather than diplomatically correcting it using the indexed authoritative sources.",
+    "notes": "Active research area in LLM alignment and pedagogical feedback."
+  },
+  {
+    "id": "q100",
+    "topic": "Multi-Source Conflict & Synthesis",
+    "category": "MultiSource_Conflict",
+    "difficulty": "medium",
+    "question": "Why is explicit conflict visualization superior to single-answer synthesis in educational learning environments?",
+    "expected_classification": "agree",
+    "ground_truth": "Explicit conflict visualization exposes students to contrasting perspectives, develops critical thinking and source evaluation skills, prevents misleading oversimplification of contested topics, and accurately reflects real-world scientific discourse where multiple valid interpretations or evolving theories coexist.",
+    "notes": "Pedagogical justification for multi-source conflict reconciliation systems."
   }
 ]

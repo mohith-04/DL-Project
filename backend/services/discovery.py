@@ -17,9 +17,8 @@ from typing import List
 import httpx
 
 
-# ---------------------------------------------------------------------------
 # Helpers
-# ---------------------------------------------------------------------------
+
 
 def _extract_domain(url: str) -> str:
     return urlparse(url).netloc.replace("www.", "")
@@ -50,9 +49,7 @@ HEADERS = {
 }
 
 
-# ---------------------------------------------------------------------------
 # Strategy 1: Wikipedia Search API (most reliable)
-# ---------------------------------------------------------------------------
 
 def _search_wikipedia(topic: str, n: int) -> List[dict]:
     """
@@ -87,9 +84,7 @@ def _search_wikipedia(topic: str, n: int) -> List[dict]:
     return results
 
 
-# ---------------------------------------------------------------------------
 # Strategy 2: Google search (scrape)
-# ---------------------------------------------------------------------------
 
 def _search_google(topic: str, n: int) -> List[dict]:
     """
@@ -114,10 +109,7 @@ def _search_google(topic: str, n: int) -> List[dict]:
     return results
 
 
-# ---------------------------------------------------------------------------
 # Strategy 3: DuckDuckGo HTML endpoint (no API key, no impersonation)
-# ---------------------------------------------------------------------------
-
 def _search_ddg_html(topic: str, n: int) -> List[dict]:
     """
     Use DuckDuckGo's lite HTML endpoint — doesn't require impersonation.
@@ -145,9 +137,8 @@ def _search_ddg_html(topic: str, n: int) -> List[dict]:
     return results
 
 
-# ---------------------------------------------------------------------------
+
 # Strategy 4: Curated trusted sources per topic keyword
-# ---------------------------------------------------------------------------
 
 CURATED_SOURCES = {
     "retrieval": [
@@ -183,9 +174,7 @@ def _curated_fallback(topic: str, primary_domain: str, n: int) -> List[dict]:
     return []
 
 
-# ---------------------------------------------------------------------------
 # Main discovery function
-# ---------------------------------------------------------------------------
 
 def discover_related_urls(
     primary_url: str,

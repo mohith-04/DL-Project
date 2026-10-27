@@ -5,6 +5,8 @@ const SOURCE_COLORS: Record<string, string> = {
   'Source B': 'bg-emerald-100 text-emerald-800 border border-emerald-200',
   'Source C': 'bg-amber-100 text-amber-800 border border-amber-200',
   'Source D': 'bg-purple-100 text-purple-800 border border-purple-200',
+  'Source E': 'bg-rose-100 text-rose-800 border border-rose-200',
+  'Source F': 'bg-cyan-100 text-cyan-800 border border-cyan-200',
 };
 
 export function ProvenanceTag({ sourceId }: { sourceId: string }) {
@@ -21,7 +23,7 @@ export function ProvenanceTag({ sourceId }: { sourceId: string }) {
  * into colored ProvenanceTag components.
  */
 export function parseProvenanceTags(text: string): React.ReactNode[] {
-  const pattern = /\[(Source [A-D](?:,\s*Source [A-D])*)\]/g;
+  const pattern = /\[(Source [A-Z](?:,\s*Source [A-Z])*)\]/g;
   const parts: React.ReactNode[] = [];
   let lastIndex = 0;
   let match: RegExpExecArray | null;

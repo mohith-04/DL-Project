@@ -44,7 +44,7 @@ export default function Home() {
             <ol className="space-y-2 text-xs text-slate-600">
               <li className="flex gap-2">
                 <span className="font-bold text-brand-600 w-4">1.</span>
-                <span>Enter a URL → system discovers 2-3 related sources</span>
+                <span>Enter a Web URL, upload PDFs/documents, or combine both</span>
               </li>
               <li className="flex gap-2">
                 <span className="font-bold text-brand-600 w-4">2.</span>
