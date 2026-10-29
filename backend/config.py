@@ -9,6 +9,7 @@ load_dotenv(BASE_DIR / ".env")
 
 class Settings(BaseSettings):
     groq_api_key: str = os.getenv("GROQ_API_KEY", "")
+    groq_api_keys: str = os.getenv("GROQ_API_KEYS", "")
     groq_base_url: str = "https://api.groq.com/openai/v1"
     llm_model_primary: str = "openai/gpt-oss-120b"
     llm_model_fallback: str = "qwen/qwen3.8-27b"
@@ -18,6 +19,15 @@ class Settings(BaseSettings):
     top_k_per_source: int = 3
     max_sources: int = 6  # supports hybrid URL + discovered sources + local files
     faiss_index_dir: str = str(BASE_DIR / "faiss_indices")
+
+    def get_groq_keys(self) -> list[str]:
+        """Return list of all configured Groq API keys for rotation."""
+        raw_keys = self.groq_api_keys.replace('"', '').replace("'", "")
+        keys = [k.strip() for k in raw_keys.split(",") if k.strip()]
+        primary = self.groq_api_key.strip().replace('"', '').replace("'", "")
+        if primary and primary not in keys:
+            keys.insert(0, primary)
+        return keys
 
     class Config:
         env_file = str(BASE_DIR / ".env")

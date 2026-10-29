@@ -2,25 +2,23 @@
 Comprehensive Evaluation Pipeline for the Multi-Source AI Tutor (100-Question Dataset).
 
 Features:
-  1. Single-session mode: evaluate with one comprehensive session ID (e.g. from an ingested textbook/coursepack).
-  2. Multi-session mapping mode (--session_map): map different session IDs to the 5 categories
-     e.g. {"RAG": "sid1", "ML": "sid2", "DL": "sid3", "Transformers": "sid4", "MultiSource_Conflict": "sid5"}.
-  3. Category filter mode (--category): evaluate only a specific category (e.g. --category RAG).
-  4. Incremental checkpointing: saves after every question.
-  5. Resume support (--resume): continue without re-running completed questions.
-  6. Automatic export of LaTeX tables (eval_paper_tables.tex) and Markdown tables (eval_paper_tables.md).
-  7. Statistical metrics with 95% Confidence Intervals, Standard Deviations, and Standard Errors.
-  8. Automatic exponential backoff retry on Groq rate limits or transient errors.
+  1. Batch Pacing: Runs N questions (default: 5) then cools down for M seconds (default: 60s)
+     to ensure Groq's rolling 60-second Tokens-Per-Minute (TPM) limit resets to zero.
+  2. Multi-Key Pool & Self-Healing: Catches 429 rate limits, waits out cooldowns, and rotates keys.
+  3. Context Optimization: Automatically trims context length to save ~60% tokens per question.
+  4. Incremental Checkpointing & Resume: Saves after every question; safely resume anytime.
+  5. Multi-session mapping & Category filtering.
+  6. LaTeX & Markdown research table export.
 
 Usage:
-    # Mode A: One comprehensive session for all 100 questions
+    # Standard run with 5-question batches and 60s reset pauses:
     python eval/run_eval.py --session_id <sid>
 
-    # Mode B: Run only one specific category (e.g. RAG, ML, DL, Transformers, MultiSource_Conflict)
-    python eval/run_eval.py --session_id <sid> --category RAG
+    # Custom batching (e.g. 10 questions, 45s pause):
+    python eval/run_eval.py --session_id <sid> --batch_size 10 --batch_pause 45
 
-    # Mode C: Multi-session mapping (each category uses its own domain session)
-    python eval/run_eval.py --session_map eval/sessions_map.json
+    # Resume an interrupted run:
+    python eval/run_eval.py --session_id <sid> --resume
 """
 import argparse
 import json
@@ -33,8 +31,15 @@ from typing import Dict, Optional
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+try:
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    if hasattr(sys.stderr, "reconfigure"):
+        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+except Exception:
+    pass
+
 import httpx
-from groq import Groq
 from config import get_settings
 from eval.eval_metrics import (
     compute_rouge,
@@ -53,6 +58,16 @@ from eval.eval_metrics import (
 settings = get_settings()
 
 
+def countdown_pause(seconds: float, reason: str = "Batch cooldown"):
+    """Display a live countdown pause."""
+    total_sec = int(seconds)
+    print(f"\n⏸ {reason}: Waiting {total_sec}s for Groq rolling quota reset...")
+    for remaining in range(total_sec, 0, -5):
+        print(f"   ⏳ Resuming in {remaining}s...", end="\r", flush=True)
+        time.sleep(min(5, remaining))
+    print(f"   ✅ Cooldown complete. Resuming evaluation!          \n")
+
+
 def run_eval(
     session_id: Optional[str] = None,
     session_map: Optional[Dict[str, str]] = None,
@@ -63,6 +78,9 @@ def run_eval(
     n_questions: int = None,
     resume: bool = False,
     pause_seconds: float = 2.0,
+    batch_size: int = 5,
+    batch_pause: float = 60.0,
+    eval_model: Optional[str] = None,
 ):
     eval_file = Path(eval_set_path)
     if not eval_file.exists():
@@ -115,16 +133,18 @@ def run_eval(
     if session_id:
         print(f"Single Session ID: {session_id}")
     if session_map:
-        print(f"Session Map (by Category): {json.dumps(session_map, indent=2)}")
+        print(f"Session Map:       {json.dumps(session_map, indent=2)}")
     if category:
         print(f"Target Category:   {category}")
     print(f"Total Questions:   {total}")
     print(f"Already Completed: {len(completed_ids)}")
+    print(f"Batch Pacing:      {batch_size} questions -> {batch_pause}s cooldown pause")
+    print(f"Eval Model:        {eval_model or settings.llm_model_fallback}")
     print(f"Output Directory:  {output_dir}")
     print(f"{'='*70}\n")
 
-    groq_client = Groq(api_key=settings.groq_api_key)
     results = list(existing_results)
+    batch_counter = 0
 
     # ── Main Evaluation Loop ──────────────────────────────────────────────────
     for i, item in enumerate(eval_set):
@@ -142,7 +162,6 @@ def run_eval(
         elif session_id:
             active_sid = session_id
         elif session_map:
-            # Fallback to any session in the map
             active_sid = list(session_map.values())[0]
 
         if not active_sid:
@@ -151,22 +170,30 @@ def run_eval(
         print(f"[{i+1}/{total}] [{cat}|{diff}] {qid} — {item['question'][:60]}... (Session: {active_sid[:8]}...)")
 
         chat_resp = None
-        for attempt in range(4):
+        # Self-healing retry loop
+        for attempt in range(5):
             try:
                 resp = httpx.post(
                     f"{base_url}/api/chat",
                     json={"session_id": active_sid, "question": item["question"]},
-                    timeout=120,
+                    timeout=180,
                 )
+                if resp.status_code == 429:
+                    print(f"  [rate-limit] Received 429. Pausing 45s for quota reset...")
+                    time.sleep(45)
+                    continue
+
                 resp.raise_for_status()
                 chat_resp = resp.json()
                 break
             except Exception as e:
-                sleep_time = 15 * (attempt + 1) if "429" in str(e) else 3 * (attempt + 1)
-                print(f"  [retry {attempt+1}/4] {e} (sleeping {sleep_time}s)...")
+                err_text = str(e).lower()
+                is_rate = "429" in err_text or "rate limit" in err_text or "quota" in err_text
+                sleep_time = 45 if is_rate else 5 * (attempt + 1)
+                print(f"  [retry {attempt+1}/5] {e} (sleeping {sleep_time}s)...")
                 time.sleep(sleep_time)
-                if attempt == 3:
-                    print(f"  ❌ Backend chat call failed: {e}")
+                if attempt == 4:
+                    print(f"  ❌ Backend chat call failed after 5 attempts: {e}")
                     results.append({
                         "id": qid,
                         "category": cat,
@@ -192,12 +219,12 @@ def run_eval(
                 )
         avg_retrieval = avg(list(retrieval_scores.values()))
 
-        # Build retrieved context string
+        # Build retrieved context string (compact max 2500 chars to save tokens)
         context_str = ""
         for sid, chunks in chat_resp.get("retrieved_chunks", {}).items():
             for c in chunks:
                 context_str += f"[{sid}] {c['text']}\n"
-        context_str = context_str[:4000] + "\n...(truncated)" if len(context_str) > 4000 else context_str
+        context_str = context_str[:2500] + "\n...(truncated)" if len(context_str) > 2500 else context_str
 
         answer = chat_resp["answer"]
         ground_truth = item["ground_truth"]
@@ -206,16 +233,16 @@ def run_eval(
         rouge = compute_rouge(answer, ground_truth)
         bleu = compute_bleu(answer, ground_truth)
 
-        # Rate-limiting pause before LLM Judge call
+        # Short inter-call pause
         time.sleep(pause_seconds)
 
+        # LLM-as-Judge (automatic backoff and retry built-in)
         judge = llm_judge(
             question=item["question"],
             answer=answer,
             ground_truth=ground_truth,
             context=context_str,
-            client=groq_client,
-            model=settings.llm_model_fallback,
+            model=eval_model or settings.llm_model_fallback,
         )
 
         result_item = {
@@ -236,14 +263,30 @@ def run_eval(
         }
         results.append(result_item)
         completed_ids.add(qid)
+        batch_counter += 1
 
-        cls_symbol = "✓" if cls_correct else "✗"
+        cls_symbol = "[MATCH]" if cls_correct else "[DIFF]"
         print(f"  Classification: {predicted_cls} (expected: {expected_cls}) [{cls_symbol}]")
         print(f"  ROUGE-L: {rouge.get('rougeL', 0):.3f} | BLEU: {bleu:.3f} | Judge Overall: {judge.get('overall', 'N/A')}/100")
 
-        # Incremental checkpoint save after every single question
+        # Save checkpoint after every question
+        checkpoint_data = {
+            "completed": len(completed_ids),
+            "total": total,
+            "results": results,
+        }
         with open(checkpoint_path, "w", encoding="utf-8") as cf:
-            json.dump({"completed": len(completed_ids), "total": total, "results": results}, cf, indent=2)
+            json.dump(checkpoint_data, cf, indent=2)
+
+        # ── Batch Pacing Pause ────────────────────────────────────────────────
+        # If batch_size reached and there are still questions left to evaluate
+        remaining_questions = total - len(completed_ids)
+        if batch_counter >= batch_size and remaining_questions > 0:
+            batch_counter = 0
+            countdown_pause(
+                batch_pause,
+                reason=f"Batch of {batch_size} questions finished ({remaining_questions} remaining)",
+            )
 
     # ── Final Aggregation ─────────────────────────────────────────────────────
     valid = [r for r in results if "error" not in r]
@@ -324,7 +367,7 @@ def run_eval(
     with open(markdown_path, "w", encoding="utf-8") as mf:
         mf.write(markdown_content)
 
-    # Clean up temporary checkpoint
+    # Clean up temporary checkpoint file
     if checkpoint_path.exists():
         try:
             checkpoint_path.unlink()
@@ -391,7 +434,10 @@ if __name__ == "__main__":
     parser.add_argument("--skip_bertscore", action="store_true", help="Skip BERTScore calculation")
     parser.add_argument("--n_questions", type=int, default=None, help="Limit number of questions to evaluate")
     parser.add_argument("--resume", action="store_true", help="Resume from existing progress in eval_results.json")
-    parser.add_argument("--pause", type=float, default=2.0, help="Pause in seconds between questions")
+    parser.add_argument("--pause", type=float, default=2.0, help="Pause in seconds between questions within a batch")
+    parser.add_argument("--batch_size", type=int, default=5, help="Number of questions per batch before rate limit cooldown pause")
+    parser.add_argument("--batch_pause", type=float, default=60.0, help="Cooldown duration in seconds between batches to reset Groq 60s quota")
+    parser.add_argument("--eval_model", default=None, help="Specific model for judge and evaluation")
     args = parser.parse_args()
 
     # Parse session_map if provided
@@ -432,4 +478,7 @@ if __name__ == "__main__":
         n_questions=args.n_questions,
         resume=args.resume,
         pause_seconds=args.pause,
+        batch_size=args.batch_size,
+        batch_pause=args.batch_pause,
+        eval_model=args.eval_model,
     )

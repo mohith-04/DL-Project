@@ -1,12 +1,13 @@
 """
 Groq LLM Call #2 — Final answer synthesis conditioned on classification result.
 Produces an answer with inline provenance tags [Source X].
+Enhanced with Multi-Key Pool, Smart 429 Backoff, and Token Optimization.
 """
-from groq import Groq
+import json
 from config import get_settings
+from services.llm_client import safe_chat_completion, build_compact_context
 
 settings = get_settings()
-
 
 SYNTHESIS_SYSTEM = """You are an expert AI tutor. Your job is to give clear, accurate, well-structured answers
 that explicitly cite which sources support each claim.
@@ -67,21 +68,13 @@ def synthesize_answer(
 ) -> str:
     """
     Generate the final synthesized answer.
-    Returns markdown string with inline [Source X] provenance tags.
+    Uses token-optimized context and safe_chat_completion with backoff/rotation.
     """
-    client = Groq(api_key=settings.groq_api_key)
-    model = model or settings.llm_model_primary
+    target_model = model or settings.llm_model_primary
 
-    # Build context
-    context_parts = []
-    for source_id, chunks in per_source_chunks.items():
-        if not chunks:
-            continue
-        combined = "\n---\n".join(c["text"] for c in chunks)
-        context_parts.append(f"=== {source_id} ===\n{combined}")
-    context = "\n\n".join(context_parts)
+    # Build token-optimized compact context (capped per source)
+    context = build_compact_context(per_source_chunks, max_chars_per_source=1200)
 
-    import json
     classification_json = json.dumps(classification, indent=2)
     cls = classification.get("classification", "agree")
 
@@ -100,18 +93,18 @@ def synthesize_answer(
         )
 
     try:
-        response = client.chat.completions.create(
-            model=model,
+        response = safe_chat_completion(
+            model=target_model,
             messages=[
                 {"role": "system", "content": SYNTHESIS_SYSTEM},
                 {"role": "user", "content": user_msg},
             ],
             temperature=0.4,
-            max_tokens=2048,
+            max_tokens=1500,
         )
         return response.choices[0].message.content
     except Exception as exc:
-        print(f"[synthesizer] Error with {model}: {exc}")
-        if model == settings.llm_model_primary:
+        print(f"[synthesizer] Error with {target_model}: {exc}")
+        if target_model != settings.llm_model_fallback and settings.llm_model_fallback:
             return synthesize_answer(question, per_source_chunks, classification, settings.llm_model_fallback)
-        raise
+        raise exc

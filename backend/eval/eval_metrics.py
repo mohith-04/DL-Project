@@ -194,41 +194,48 @@ def llm_judge(
     answer: str,
     ground_truth: str,
     context: str,
-    client,
-    model: str,
+    client=None,
+    model: Optional[str] = None,
 ) -> Dict:
-    """LLM-as-judge evaluation returning multi-dimensional scores with robust retry."""
+    """LLM-as-judge evaluation returning multi-dimensional scores with robust retry and token-optimized context."""
+    from services.llm_client import safe_chat_completion
+    from config import get_settings
+    settings = get_settings()
+
+    # Truncate context to max 2500 chars to avoid token limit overflow
+    compact_context = context[:2500] + ("\n...(truncated)" if len(context) > 2500 else "")
+
     user_msg = (
         f"Question: {question}\n\n"
         f"Ground Truth Reference:\n{ground_truth}\n\n"
-        f"Retrieved Context:\n{context[:8000]}\n\n"
+        f"Retrieved Context:\n{compact_context}\n\n"
         f"AI Tutor Generated Answer:\n{answer}"
     )
 
-    for attempt in range(3):
+    judge_model = model or settings.llm_model_fallback
+
+    try:
+        resp = safe_chat_completion(
+            model=judge_model,
+            messages=[
+                {"role": "system", "content": JUDGE_SYSTEM},
+                {"role": "user", "content": user_msg},
+            ],
+            temperature=0.0,
+            max_tokens=600,
+            response_format={"type": "json_object"},
+        )
+        return json.loads(resp.choices[0].message.content)
+    except Exception as e:
         try:
-            resp = client.chat.completions.create(
-                model=model,
-                messages=[
-                    {"role": "system", "content": JUDGE_SYSTEM},
-                    {"role": "user", "content": user_msg},
-                ],
-                temperature=0.0,
-                response_format={"type": "json_object"},
-            )
-            return json.loads(resp.choices[0].message.content)
-        except Exception as e:
-            time.sleep(1.5 * (attempt + 1))
-            try:
-                err_body = e.response.json() if hasattr(e, "response") else {}
-                failed_text = err_body.get("error", {}).get("failed_generation", "")
-                if failed_text:
-                    cleaned = re.sub(r"\}\}\s*$", "}", failed_text.strip())
-                    return json.loads(cleaned)
-            except Exception:
-                pass
-            if attempt == 2:
-                print(f"[judge] LLM judge failed after 3 attempts: {e}")
+            err_body = e.response.json() if hasattr(e, "response") else {}
+            failed_text = err_body.get("error", {}).get("failed_generation", "")
+            if failed_text:
+                cleaned = re.sub(r"\}\}\s*$", "}", failed_text.strip())
+                return json.loads(cleaned)
+        except Exception:
+            pass
+        print(f"[judge] LLM judge fallback: {e}")
 
     return {
         k: 0
@@ -304,7 +311,10 @@ def generate_latex_tables(summary: Dict) -> str:
     tex.append("\\toprule")
     tex.append("\\textbf{Dimension} & \\textbf{Metric} & \\textbf{Score} \\\\")
     tex.append("\\midrule")
-    tex.append(f"Classification & Accuracy & {cls_m.get('accuracy', 0):.1%} [95\\% CI: {cls_m.get('accuracy_ci95_low', 0):.1\\%}--{cls_m.get('accuracy_ci95_high', 0):.1\\%}] \\\\")
+    acc_pct = cls_m.get('accuracy', 0) * 100
+    ci_low = cls_m.get('accuracy_ci95_low', 0) * 100
+    ci_high = cls_m.get('accuracy_ci95_high', 0) * 100
+    tex.append(f"Classification & Accuracy & {acc_pct:.1f}\\% [95\\% CI: {ci_low:.1f}\\%--{ci_high:.1f}\\%] \\\\")
     tex.append(f"Classification & Macro Precision & {cls_m.get('macro_precision', 0):.3f} \\\\")
     tex.append(f"Classification & Macro Recall & {cls_m.get('macro_recall', 0):.3f} \\\\")
     tex.append(f"Classification & Macro F1 & {cls_m.get('macro_f1', 0):.3f} \\\\")
@@ -341,7 +351,7 @@ def generate_latex_tables(summary: Dict) -> str:
     tex.append("\\textbf{Category} & \\textbf{Cls Acc (\\%)} & \\textbf{ROUGE-L} & \\textbf{Faithfulness} & \\textbf{Overall (/100)} \\\\")
     tex.append("\\midrule")
     for cat, info in sorted(by_cat.items()):
-        c_acc = f"{info.get('classification_accuracy', 0):.1%}"
+        c_acc = f"{info.get('classification_accuracy', 0) * 100:.1f}\\%"
         rl_m = f"{info.get('rouge_l_stats', {}).get('mean', 0):.3f}"
         f_m = f"{info.get('faithfulness_stats', {}).get('mean', 0):.1f}"
         ov_m = f"{info.get('overall_stats', {}).get('mean', 0):.1f}"
@@ -412,7 +422,7 @@ def generate_markdown_tables(summary: Dict) -> str:
     md.append("|---|:---:|:---:|:---:|:---:|:---:|")
     for cat, info in sorted(by_cat.items()):
         cat_disp = cat.replace("_", " ")
-        c_acc = f"{info.get('classification_accuracy', 0):.1%}"
+        c_acc = f"{info.get('classification_accuracy', 0) * 100:.1f}\\%"
         rl_m = f"{info.get('rouge_l_stats', {}).get('mean', 0):.3f}"
         f_m = f"{info.get('faithfulness_stats', {}).get('mean', 0):.1f}"
         ov_m = f"{info.get('overall_stats', {}).get('mean', 0):.1f}"
@@ -424,7 +434,7 @@ def generate_markdown_tables(summary: Dict) -> str:
     for diff in ["easy", "medium", "hard"]:
         if diff in by_diff:
             info = by_diff[diff]
-            c_acc = f"{info.get('classification_accuracy', 0):.1%}"
+            c_acc = f"{info.get('classification_accuracy', 0) * 100:.1f}\\%"
             rl_m = f"{info.get('rouge_l_stats', {}).get('mean', 0):.3f}"
             f_m = f"{info.get('faithfulness_stats', {}).get('mean', 0):.1f}"
             ov_m = f"{info.get('overall_stats', {}).get('mean', 0):.1f}"

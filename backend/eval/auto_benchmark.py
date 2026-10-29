@@ -99,6 +99,8 @@ def main():
     parser.add_argument("--skip_bertscore", action="store_true", default=True, help="Skip heavy BERTScore")
     parser.add_argument("--n_questions", type=int, default=None, help="Limit number of questions")
     parser.add_argument("--resume", action="store_true", help="Resume interrupted evaluation")
+    parser.add_argument("--batch_size", type=int, default=5, help="Questions per batch before cooldown pause")
+    parser.add_argument("--batch_pause", type=float, default=60.0, help="Cooldown duration in seconds between batches")
     args = parser.parse_args()
 
     sessions_path = Path(args.sessions_file)
@@ -137,6 +139,8 @@ def main():
         skip_bertscore=args.skip_bertscore,
         n_questions=args.n_questions,
         resume=args.resume,
+        batch_size=args.batch_size,
+        batch_pause=args.batch_pause,
     )
 
 

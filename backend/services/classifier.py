@@ -1,13 +1,13 @@
 """
 Groq LLM Call #1 — Cross-source relationship classification.
 Classifies how sources relate: agree | partial | conflict
+Enhanced with Multi-Key Pool, Smart 429 Backoff, and Token Optimization.
 """
 import json
-from groq import Groq
 from config import get_settings
+from services.llm_client import safe_chat_completion, build_compact_context
 
 settings = get_settings()
-
 
 CLASSIFY_SYSTEM = """You are an expert knowledge analyst specializing in comparing educational sources.
 Your task: analyze what multiple sources say about a specific question and classify their relationship.
@@ -38,20 +38,11 @@ def classify_sources(
 ) -> dict:
     """
     Given per-source retrieved chunks, classify their relationship for the question.
-    Returns the parsed JSON classification dict.
+    Uses token-optimized context and safe_chat_completion with backoff/rotation.
     """
-    client = Groq(api_key=settings.groq_api_key)
-    model = model or settings.llm_model_primary
+    context = build_compact_context(per_source_chunks, max_chars_per_source=1000)
 
-    # Build context: one section per source
-    context_parts = []
-    for source_id, chunks in per_source_chunks.items():
-        if not chunks:
-            continue
-        combined = "\n---\n".join(c["text"] for c in chunks)
-        context_parts.append(f"=== {source_id} ===\n{combined}")
-
-    if not context_parts:
+    if not context:
         return {
             "classification": "agree",
             "confidence": 0.5,
@@ -60,7 +51,6 @@ def classify_sources(
             "key_differences": "None",
         }
 
-    context = "\n\n".join(context_parts)
     user_msg = f"""Question: {question}
 
 Source excerpts:
@@ -68,21 +58,30 @@ Source excerpts:
 
 Analyze how these sources relate to answering this question and return the JSON classification."""
 
+    target_model = model or settings.llm_model_primary
+
     try:
-        response = client.chat.completions.create(
-            model=model,
+        response = safe_chat_completion(
+            model=target_model,
             messages=[
                 {"role": "system", "content": CLASSIFY_SYSTEM},
                 {"role": "user", "content": user_msg},
             ],
             temperature=0.1,
+            max_tokens=1000,
             response_format={"type": "json_object"},
         )
         result = json.loads(response.choices[0].message.content)
         return result
     except Exception as exc:
-        print(f"[classifier] Error with {model}: {exc}")
-        if model == settings.llm_model_primary:
-            # Fallback to smaller model
+        print(f"[classifier] Exception encountered: {exc}")
+        if target_model != settings.llm_model_fallback and settings.llm_model_fallback:
             return classify_sources(question, per_source_chunks, settings.llm_model_fallback)
-        raise
+        # Safe fallback structure if all retries exhausted
+        return {
+            "classification": "agree",
+            "confidence": 0.5,
+            "reasoning": f"Classification fallback due to error: {exc}",
+            "per_source_summary": {},
+            "key_differences": "None",
+        }

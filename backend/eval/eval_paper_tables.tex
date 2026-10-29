@@ -1,0 +1,70 @@
+% ========================================================================
+% TABLE 1: Overall Performance Metrics for Multi-Source AI Tutor
+% ========================================================================
+\begin{table}[htbp]
+\centering
+\caption{Overall Evaluation Metrics Across $N=100$ Questions}
+\label{tab:overall_results}
+\begin{tabular}{llr}
+\toprule
+\textbf{Dimension} & \textbf{Metric} & \textbf{Score} \\
+\midrule
+Classification & Accuracy & 36.0\% [95\% CI: 27.3\%--45.8\%] \\
+Classification & Macro Precision & 0.359 \\
+Classification & Macro Recall & 0.378 \\
+Classification & Macro F1 & 0.310 \\
+\midrule
+Lexical Overlap & ROUGE-1 & 0.116 $\pm$ 0.037 \\
+Lexical Overlap & ROUGE-2 & 0.034 $\pm$ 0.017 \\
+Lexical Overlap & ROUGE-L & 0.076 $\pm$ 0.024 \\
+Lexical Overlap & BLEU & 0.006 $\pm$ 0.006 \\
+\midrule
+Retrieval & Cosine Similarity & 0.6779 \\
+\midrule
+LLM-as-Judge & Accuracy & 88.8 $\pm$ 20.1 / 100 \\
+LLM-as-Judge & Faithfulness & 54.8 $\pm$ 35.2 / 100 \\
+LLM-as-Judge & Context Recall & 50.2 $\pm$ 33.4 / 100 \\
+LLM-as-Judge & Context Precision & 52.9 $\pm$ 32.4 / 100 \\
+LLM-as-Judge & Provenance & 57.2 $\pm$ 37.8 / 100 \\
+LLM-as-Judge & Overall & 65.7 $\pm$ 21.7 / 100 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ========================================================================
+% TABLE 2: Category Breakdown (5 Categories x 20 Questions)
+% ========================================================================
+\begin{table}[htbp]
+\centering
+\caption{Performance Breakdown across Subject Categories ($N=20$ per category)}
+\label{tab:category_breakdown}
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Category} & \textbf{Cls Acc (\%)} & \textbf{ROUGE-L} & \textbf{Faithfulness} & \textbf{Overall (/100)} \\
+\midrule
+DL & 30.0\% & 0.085 & 51.0 & 66.2 \\
+ML & 20.0\% & 0.080 & 39.0 & 61.8 \\
+MultiSource Conflict & 50.0\% & 0.073 & 51.8 & 63.4 \\
+RAG & 45.0\% & 0.069 & 45.8 & 65.9 \\
+Transformers & 35.0\% & 0.075 & 67.5 & 71.0 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ========================================================================
+% TABLE 3: Per-Class Classification Confusion Matrix / Precision-Recall-F1
+% ========================================================================
+\begin{table}[htbp]
+\centering
+\caption{Cross-Source Relationship Classification Metrics by Class}
+\label{tab:per_class_classification}
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Class} & \textbf{Support ($N$)} & \textbf{Precision} & \textbf{Recall} & \textbf{F1-Score} \\
+\midrule
+Agree & 59 & 0.550 & 0.186 & 0.279 \\
+Partial & 30 & 0.329 & 0.767 & 0.460 \\
+Conflict & 11 & 0.200 & 0.182 & 0.191 \\
+\bottomrule
+\end{tabular}
+\end{table}
